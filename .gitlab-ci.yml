@@ -3,7 +3,7 @@
 # Issue: https://gitlab.com/gitlab-org/gitlab/-/issues/292977
 
 include:
-  - template: Security/SAST.gitlab-ci.yml
+  template: Jobs/SAST.gitlab-ci.yml
 
 stages:
   - test
@@ -29,4 +29,3 @@ before_script:
 cache:
   paths:
     - .m2/repository
-
