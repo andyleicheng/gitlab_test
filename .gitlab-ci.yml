@@ -5,22 +5,28 @@
 include:
   template: Jobs/SAST.gitlab-ci.yml
 
+
 stages:
+  - build
   - test
 
 variables:
   SAST_ANALYZER_IMAGE: registry.gitlab.com/gitlab-org/security-products/analyzers/sast:latest
   SAST_EXCLUDED_PATHS: "vendor/*"
 
+build:
+  stage: build
+  script:
+    - mvn compile
+
 sast:
   stage: test
   dependencies:
-    - compile
+    - build
   artifacts:
     reports:
       sast: gl-sast-report.json
   script:
-    - mvn compile
     - sast
 
 before_script:
