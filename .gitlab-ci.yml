@@ -1,14 +1,32 @@
+# This file is a template, and might need editing before it works on your project.
+# This template moved to Jobs/SAST.gitlab-ci.yml in GitLab 14.0
+# Issue: https://gitlab.com/gitlab-org/gitlab/-/issues/292977
+
+include:
+  - template: Security/SAST.gitlab-ci.yml
+
 stages:
   - test
 
+variables:
+  SAST_ANALYZER_IMAGE: registry.gitlab.com/gitlab-org/security-products/analyzers/sast:latest
+  SAST_EXCLUDED_PATHS: "vendor/*"
+
 sast:
   stage: test
-  image: registry.gitlab.com/gitlab-org/security-products/analyzers/sast:latest
-  script:
-    - curl -L https://github.com/OWASP/railsgoat/archive/main.zip -o railsgoat.zip
-    - unzip railsgoat.zip
-    - cd railsgoat-main
-    - /analyze -f gl-sast -o gl-sast-report.json .
+  dependencies:
+    - compile
   artifacts:
     reports:
       sast: gl-sast-report.json
+  script:
+    - mvn compile
+    - sast
+
+before_script:
+  - apt-get update -qq && apt-get install -y -qq curl unzip
+
+cache:
+  paths:
+    - .m2/repository
+
