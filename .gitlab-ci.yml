@@ -11,7 +11,7 @@ image-build:
 
 trivy-scan:
   stage: test
-  image: aquasec/trivy:latest
+  image: snyk/snyk-cli
   script:
     - gunzip -c myapp-$CI_COMMIT_SHORT_SHA.tar.gz | docker load
     - trivy --exit-code 1 myapp:$CI_COMMIT_SHORT_SHA
