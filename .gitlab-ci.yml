@@ -1,24 +1,27 @@
-image: docker:stable
+stages:
+  - build
+  - test
 
-services:
-  - docker:dind
-  
-image-build:
+variables:
+  DOCKER_DRIVER: overlay2
+  DOCKER_TLS_CERTDIR: ""
+  CONTAINER_IMAGE: my-docker-image
+
+before_script:
+  - apk add --update git
+  - apk add --update bash
+  - apk add --update curl
+  - curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin
+  - chmod +x /usr/local/bin/trivy
+
+build:
   stage: build
   script:
-    - docker build -t myapp:$CI_COMMIT_SHORT_SHA .
-    - docker save myapp:$CI_COMMIT_SHORT_SHA | gzip > myapp-$CI_COMMIT_SHORT_SHA.tar.gz
-  artifacts:
-    paths:
-      - myapp-$CI_COMMIT_SHORT_SHA.tar.gz
-  rules:
-    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    - docker build -t $CONTAINER_IMAGE .
+    - docker run --name $CONTAINER_IMAGE $CONTAINER_IMAGE sleep 10
+    - docker stop $CONTAINER_IMAGE
 
-trivy-scan:
+test:
   stage: test
-  image: owasp/zap2docker-stable
   script:
-    - gunzip -c myapp-$CI_COMMIT_SHORT_SHA.tar.gz | docker load
-    - trivy --exit-code 1 myapp:$CI_COMMIT_SHORT_SHA
-  rules:
-    - if: $CI_MERGE_REQUEST_ID
+    - trivy --exit-code 1 --severity CRITICAL --no-progress $CONTAINER_IMAGE
