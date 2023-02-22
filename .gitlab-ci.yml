@@ -1,27 +1,14 @@
 stages:
-  - build
   - test
 
-variables:
-  DOCKER_DRIVER: overlay2
-  DOCKER_TLS_CERTDIR: ""
-  CONTAINER_IMAGE: my-docker-image
-
-before_script:
-  - apk add --update git
-  - apk add --update bash
-  - apk add --update curl
-  - curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin
-  - chmod +x /usr/local/bin/trivy
-
-build:
-  stage: build
-  script:
-    - docker build -t $CONTAINER_IMAGE .
-    - docker run --name $CONTAINER_IMAGE $CONTAINER_IMAGE sleep 10
-    - docker stop $CONTAINER_IMAGE
-
-test:
+sast:
   stage: test
+  image: registry.gitlab.com/gitlab-org/security-products/analyzers/sast:latest
   script:
-    - trivy --exit-code 1 --severity CRITICAL --no-progress $CONTAINER_IMAGE
+    - curl -L https://github.com/OWASP/railsgoat/archive/main.zip -o railsgoat.zip
+    - unzip railsgoat.zip
+    - cd railsgoat-main
+    - /analyze -f gl-sast -o gl-sast-report.json .
+  artifacts:
+    reports:
+      sast: gl-sast-report.json
