@@ -1,7 +1,5 @@
 # jira_test_andy
 123
-23
-123
 
 
 ## Getting started
